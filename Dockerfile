@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-# 安装系统依赖（包括 Node.js 用于构建前端）
+# 安装系统依赖
 RUN apt-get update && apt-get install -y --no-install-recommends \
     curl \
     git \
@@ -8,9 +8,12 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     python3-dev \
     libffi-dev \
     libssl-dev \
-    nodejs \
-    npm \
     && rm -rf /var/lib/apt/lists/*
+
+# 🔑 安装 Node.js 20 (使用 NodeSource 官方源)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
 
 ENV HERMES_HOME=/root/.hermes
 ENV HERMES_ALLOW_ROOT_GATEWAY=1
@@ -35,8 +38,10 @@ WORKDIR /opt/hermes
 RUN pip install --upgrade pip setuptools wheel && \
     HERMES_NIX_BUILD=1 pip install --no-cache-dir .
 
-# 构建前端
-RUN cd web && npm install && npm run build
+# 🔑 构建前端 (使用正确的 Node.js 版本)
+RUN cd web && \
+    npm install && \
+    npm run build
 
 EXPOSE 8642
 CMD ["hermes", "dashboard", "--host", "0.0.0.0", "--port", "8642"]
