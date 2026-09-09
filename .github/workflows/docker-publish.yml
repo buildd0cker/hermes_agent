@@ -29,15 +29,12 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # 获取实际使用的版本号（用于镜像标签）
       - name: Resolve version
         id: resolve_version
         run: |
           if [ -n "${{ github.event.inputs.hermes_version }}" ]; then
-            # 用户指定了版本
             echo "tag=${{ github.event.inputs.hermes_version }}" >> $GITHUB_OUTPUT
           else
-            # 自动获取最新版本
             LATEST=$(curl -s https://api.github.com/repos/NousResearch/hermes-agent/releases/latest | grep tag_name | cut -d '"' -f 4)
             echo "tag=${LATEST}" >> $GITHUB_OUTPUT
           fi
@@ -48,14 +45,11 @@ jobs:
           context: .
           push: true
           tags: |
-            # 始终打 latest 标签
             ghcr.io/${{ github.repository }}:latest
-            # 版本标签
             ghcr.io/${{ github.repository }}:${{ steps.resolve_version.outputs.tag }}
           build-args: |
             HERMES_VERSION=${{ github.event.inputs.hermes_version }}
 
-      # 输出构建信息
       - name: Print build info
         run: |
           echo "✅ Docker image built and pushed!"
