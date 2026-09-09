@@ -10,8 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# 🔑 安装 Node.js 20 (使用 NodeSource 官方源)
-RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+# 🔑 安装 Node.js 22 (满足 Hermes 要求)
+RUN curl -fsSL https://deb.nodesource.com/setup_24.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
@@ -38,7 +38,7 @@ WORKDIR /opt/hermes
 RUN pip install --upgrade pip setuptools wheel && \
     HERMES_NIX_BUILD=1 pip install --no-cache-dir .
 
-# 🔑 构建前端 (使用正确的 Node.js 版本)
+# 🔑 构建前端 (Node.js 22)
 RUN cd web && \
     npm install && \
     npm run build
