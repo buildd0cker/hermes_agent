@@ -1,0 +1,52 @@
+name: Test Hermes Download
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Hermes version to test (e.g., v2026.9.7)'
+        required: false
+        default: 'v2026.9.7'
+        type: string
+
+jobs:
+  test-download:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Test curl download
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "Testing version: $VERSION"
+          
+          # 测试 GitHub 标准下载链接
+          echo "=== Testing standard GitHub download ==="
+          curl -v -L --retry 3 --retry-delay 2 \
+            "https://github.com/NousResearch/hermes-agent/archive/refs/tags/${VERSION}.tar.gz" \
+            -o /tmp/test1.tar.gz
+          echo "Exit code: $?"
+          ls -la /tmp/test1.tar.gz || echo "File not found"
+          file /tmp/test1.tar.gz || echo "file command failed"
+          
+          # 测试 codeload 备用链接
+          echo "=== Testing codeload fallback ==="
+          curl -v -L --retry 3 --retry-delay 2 \
+            "https://codeload.github.com/NousResearch/hermes-agent/tar.gz/refs/tags/${VERSION}" \
+            -o /tmp/test2.tar.gz
+          echo "Exit code: $?"
+          ls -la /tmp/test2.tar.gz || echo "File not found"
+          file /tmp/test2.tar.gz || echo "file command failed"
+
+      - name: Check if tag exists via git
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "=== Checking if tag exists ==="
+          git ls-remote --tags https://github.com/NousResearch/hermes-agent.git | grep -E "refs/tags/${VERSION}$" || echo "Tag not found"
+
+      - name: Test git clone
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          echo "=== Testing git clone ==="
+          git clone --depth 1 --branch ${VERSION} https://github.com/NousResearch/hermes-agent.git /tmp/hermes-test
+          ls -la /tmp/hermes-test/
+          echo "Clone successful!"
