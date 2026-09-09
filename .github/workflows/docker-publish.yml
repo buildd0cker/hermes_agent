@@ -1,4 +1,4 @@
-name: Build and publish Docker image
+name: Build and publish Hermes Agent Docker image
 
 on:
   push:
@@ -18,6 +18,7 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -29,13 +30,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Resolve version
+      - name: Resolve Hermes version
         id: resolve_version
         run: |
           if [ -n "${{ github.event.inputs.hermes_version }}" ]; then
+            echo "Using user-specified version: ${{ github.event.inputs.hermes_version }}"
             echo "tag=${{ github.event.inputs.hermes_version }}" >> $GITHUB_OUTPUT
           else
+            echo "No version specified, fetching latest release..."
             LATEST=$(curl -s https://api.github.com/repos/NousResearch/hermes-agent/releases/latest | grep tag_name | cut -d '"' -f 4)
+            echo "Latest version: $LATEST"
             echo "tag=${LATEST}" >> $GITHUB_OUTPUT
           fi
 
@@ -48,7 +52,7 @@ jobs:
             ghcr.io/${{ github.repository }}:latest
             ghcr.io/${{ github.repository }}:${{ steps.resolve_version.outputs.tag }}
           build-args: |
-            HERMES_VERSION=${{ github.event.inputs.hermes_version }}
+            HERMES_VERSION=${{ steps.resolve_version.outputs.tag }}
 
       - name: Print build info
         run: |
